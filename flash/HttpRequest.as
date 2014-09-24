@@ -8,6 +8,10 @@ package {
     // Networking events
     import flash.events.Event;
     import flash.events.ProgressEvent;
+    import flash.events.TimerEvent;
+
+    // Timer
+    import flash.utils.Timer;
 
     public class HttpRequest {
         // The socket we use for the connection
@@ -24,6 +28,9 @@ package {
 
         // Should we keep the connection alive
         private var keepAlive:Boolean;
+
+        // Timer to return if nothing has happened after a delay
+        private var returnTimer:Timer;
 
         // The callback to run when we get data
         private var callback:Function;
@@ -113,10 +120,20 @@ package {
 
             // Read the data
             this.data += buff.readUTFBytes(buff.length);
+
+            // Reset the timer
+            if(returnTimer != null) {
+                returnTimer.reset();
+            }
+
+            // Setup timer
+            returnTimer = new Timer(500, 1);
+            returnTimer.addEventListener(TimerEvent.TIMER, onSocketTimeout);
+            returnTimer.start();
         }
 
-        // When the socket closes
-        private function onSocketClose(e:Event) {
+        // Processes the data
+        private function processData() {
             var split:Array = this.data.split('\r\n\r\n');
             if(split.length >= 2) {
                 var split2 = split[1].split('\r\n');
@@ -131,6 +148,31 @@ package {
 
             // Something rooted up
             callback('Something went wrong!');
+        }
+
+        // When the socket times out
+        private function onSocketTimeout(e:TimerEvent) {
+            // Remove the event listener
+            sock.removeEventListener(Event.CLOSE, onSocketClose);
+
+            // Close the socket
+            sock.close();
+
+            // Process the data
+            processData();
+        }
+
+        // When the socket closes
+        private function onSocketClose(e:Event) {
+            trace('Socket closed!');
+
+            // Reset the timer
+            if(returnTimer != null) {
+                returnTimer.reset();
+            }
+
+            // Process the data
+            processData();
         }
     }
 }
