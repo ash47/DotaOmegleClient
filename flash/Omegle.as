@@ -2,17 +2,16 @@
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
 
-	import HttpRequest;
+	import OmegleClient;
 
-	public class Omegle extends MovieClip
-	{
+	public class Omegle extends MovieClip {
 		// element details filled out by game engine
 		public var gameAPI:Object;
 		public var globals:Object;
 		public var elementName:String;
 
 		public function Omegle() {
-			new HttpRequest('Roger');
+			new OmegleClient();
         }
 
 		// called by the game engine when this .swf has finished loading
